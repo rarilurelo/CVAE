@@ -86,7 +86,7 @@ class VAE(object):
         return sess.run(self.pi, feed_dict={self.x: x, self.y: y})
 
     def struct_img(self, y, z, sess):
-        return sess.run(self.pi_out, feed_dict={self.y: y, self.z: z})
+        return sess.run(self.pi_out, feed_dict={self.y: y, self.z_in: z})
 
     def log_p_y(self, y):
         return tf.log(tf.fill([1], 1/self.cat_dim))
@@ -229,10 +229,13 @@ if __name__ == '__main__':
 
     reconstruct_image = vae.reconstruct(test_X, test_y, sess)
     fig = plt.figure()
+
+    rotate_X = test_X[test_y[:, 10] > 0.45]
     for i in range(5):
-        ax = fig.add_subplot(1, 10, 2*i+1)
+        print test_y[i][10]
+        ax = fig.add_subplot(10, 10, 2*i+1)
         ax.imshow(test_X[i].reshape(28, 28), 'gray')
-        ax = fig.add_subplot(1, 10, 2*i+2)
+        ax = fig.add_subplot(10, 10, 2*i+2)
         ax.imshow(reconstruct_image[i].reshape(28, 28), 'gray')
 
     plt.show()
