@@ -9,7 +9,7 @@ import matplotlib.pyplot as plt
 
 flags = tf.app.flags
 FLAGS = flags.FLAGS
-flags.DEFINE_boolean("use_augmentation", True, "if True, load augmented data")
+flags.DEFINE_boolean("use_rotation", True, "if True, load rotated data")
 flags.DEFINE_integer("epochs", 10, "number of epochs")
 flags.DEFINE_boolean("use_model", True, "if True, use model of trained")
 
@@ -162,7 +162,7 @@ class VAE(object):
 
                 return pi
 
-def augmentation(X, y, n=10000):
+def rotation(X, y):
     img    = X[0].reshape(-1, 28)
     center = (img.shape[0]*0.5, img.shape[1]*0.5)
     size   = (img.shape[0], img.shape[1])
@@ -171,29 +171,32 @@ def augmentation(X, y, n=10000):
     y = np.concatenate((y, np.zeros(shape=(y.shape[0], 1))), axis=1)
     length = X.shape[0]
 
-    for _ in range(n):
-        ind = np.random.randint(0, X.shape[0])
-        x = X[ind]
-        new_y = y[ind]
+    for i, x in enumerate(X):
+        print i
         x = x.reshape(-1, 28)
-        angle = np.random.randint(0, 90)
-
+        angle = np.random.randint(0, 180)
         rotation_matrix = cv2.getRotationMatrix2D(center, angle, scale)
         x_rot = cv2.warpAffine(x, rotation_matrix, size)
-        x_rot = x_rot.reshape(1, 784)
-        X = np.concatenate((X, x_rot), axis=0)
-        new_y[10] = angle/90.0
-        new_y = new_y.reshape(1, 11)
-        y = np.concatenate((y, new_y), axis=0)
+        x_rot = x_rot.reshape(784)
+        X[i] = x_rot
+        y[i, 10] = angle/180.0
 
     return X, y
 
-
+def imshow10(x1, x2, fig):
+    if len(x1) > 10:
+        x1 = x1[0:10]
+        x1 = x1[0:10]
+    for i, (xx1, xx2) in enumerate(zip(x1, x2)):
+        ax = fig.add_subplot(2, 10, 2*i+1)
+        ax.imshow(xx1.reshape(28, 28))
+        ax = fig.add_subplot(2, 10, 2*i+2)
+        ax.imshow(xx2.reshape(28, 28))
 
 
 if __name__ == '__main__':
-    if FLAGS.use_augmentation:
-        mnist = np.load('augmented.npz')
+    if FLAGS.use_rotation:
+        mnist = np.load('rotation.npz')
         mnist_X = mnist['x']
         mnist_y = mnist['y']
         print 'load mnist'
@@ -203,9 +206,9 @@ if __name__ == '__main__':
         mnist_X, mnist_y = mnist.data, mnist.target.astype(np.int32)
         mnist_X = mnist_X/255.0
         mnist_y = np.eye(np.max(mnist_y)+1)[mnist_y]
-        mnist_X, mnist_y = augmentation(mnist_X, mnist_y)
-        print 'finish augmentation'
-        np.savez('augmented.npz', x=mnist_X, y=mnist_y)
+        mnist_X, mnist_y = rotation(mnist_X, mnist_y)
+        print 'finish rotation'
+        np.savez('rotation.npz', x=mnist_X, y=mnist_y)
 
 
     train_X, test_X, train_y, test_y = train_test_split(mnist_X, mnist_y, test_size=0.2)
@@ -228,21 +231,8 @@ if __name__ == '__main__':
         saver.save(sess, 'model.ckpt')
 
     reconstruct_image = vae.reconstruct(test_X, test_y, sess)
-    fig = plt.figure()
+    fig = plt.figure(figsize=(10, 10))
+    imshow10(test_X, reconstruct_image, fig)
 
-    rotate_X = test_X[test_y[:, 10] > 0.45]
-    for i in range(5):
-        print test_y[i][10]
-        ax = fig.add_subplot(10, 10, 2*i+1)
-        ax.imshow(test_X[i].reshape(28, 28), 'gray')
-        ax = fig.add_subplot(10, 10, 2*i+2)
-        ax.imshow(reconstruct_image[i].reshape(28, 28), 'gray')
-
-    plt.show()
-
-
-
-
-
-
+    plt.savefig('reconstruct.png')
 
