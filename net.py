@@ -1,7 +1,7 @@
 from __future__ import division
 import numpy as np
 import tensorflow as tf
-import cv2
+#import cv2
 from sklearn.datasets import fetch_mldata
 from sklearn.utils import shuffle
 from sklearn.cross_validation import train_test_split
@@ -9,7 +9,7 @@ import matplotlib.pyplot as plt
 
 flags = tf.app.flags
 FLAGS = flags.FLAGS
-flags.DEFINE_boolean("use_augmentation", False, "if True load augmented data")
+flags.DEFINE_boolean("use_augmentation", True, "if True load augmented data")
 flags.DEFINE_integer("epochs", 10, "number of epochs")
 
 class Linear(object):
@@ -157,31 +157,31 @@ class VAE(object):
 
                 return pi
 
-def augmentation(X, y, n=10000):
-    img    = X[0].reshape(-1, 28)
-    center = (img.shape[0]*0.5, img.shape[1]*0.5)
-    size   = (img.shape[0], img.shape[1])
-    scale  = 1.0
-
-    y = np.concatenate((y, np.zeros(shape=(y.shape[0], 1))), axis=1)
-    length = X.shape[0]
-
-    for _ in range(n):
-        ind = np.random.randint(0, X.shape[0])
-        x = X[ind]
-        new_y = y[ind]
-        x = x.reshape(-1, 28)
-        angle = np.random.randint(0, 90)
-
-        rotation_matrix = cv2.getRotationMatrix2D(center, angle, scale)
-        x_rot = cv2.warpAffine(x, rotation_matrix, size)
-        x_rot = x_rot.reshape(1, 784)
-        X = np.concatenate((X, x_rot), axis=0)
-        new_y[10] = angle/90.0
-        new_y = new_y.reshape(1, 11)
-        y = np.concatenate((y, new_y), axis=0)
-
-    return X, y
+#def augmentation(X, y, n=10000):
+#    img    = X[0].reshape(-1, 28)
+#    center = (img.shape[0]*0.5, img.shape[1]*0.5)
+#    size   = (img.shape[0], img.shape[1])
+#    scale  = 1.0
+#
+#    y = np.concatenate((y, np.zeros(shape=(y.shape[0], 1))), axis=1)
+#    length = X.shape[0]
+#
+#    for _ in range(n):
+#        ind = np.random.randint(0, X.shape[0])
+#        x = X[ind]
+#        new_y = y[ind]
+#        x = x.reshape(-1, 28)
+#        angle = np.random.randint(0, 90)
+#
+#        rotation_matrix = cv2.getRotationMatrix2D(center, angle, scale)
+#        x_rot = cv2.warpAffine(x, rotation_matrix, size)
+#        x_rot = x_rot.reshape(1, 784)
+#        X = np.concatenate((X, x_rot), axis=0)
+#        new_y[10] = angle/90.0
+#        new_y = new_y.reshape(1, 11)
+#        y = np.concatenate((y, new_y), axis=0)
+#
+#    return X, y
 
 
 
@@ -193,13 +193,14 @@ if __name__ == '__main__':
         mnist_y = mnist['y']
         print 'load mnist'
     else:
-        mnist = fetch_mldata('MNIST original')
-        mnist_X, mnist_y = mnist.data, mnist.target.astype(np.int32)
-        mnist_X = mnist_X/255.0
-        mnist_y = np.eye(np.max(mnist_y)+1)[mnist_y]
-        mnist_X, mnist_y = augmentation(mnist_X, mnist_y)
-        print 'finish augmentation'
-        np.savez('augmented.npz', x=mnist_X, y=mnist_y)
+        pass
+        #mnist = fetch_mldata('MNIST original')
+        #mnist_X, mnist_y = mnist.data, mnist.target.astype(np.int32)
+        #mnist_X = mnist_X/255.0
+        #mnist_y = np.eye(np.max(mnist_y)+1)[mnist_y]
+        #mnist_X, mnist_y = augmentation(mnist_X, mnist_y)
+        #print 'finish augmentation'
+        #np.savez('augmented.npz', x=mnist_X, y=mnist_y)
 
 
     train_X, test_X, train_y, test_y = train_test_split(mnist_X, mnist_y, test_size=0.2)
